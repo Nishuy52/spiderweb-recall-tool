@@ -30,6 +30,13 @@ def main():
     print(f"Writing spreadsheet → {xlsx_path}")
     export_xlsx(people, xlsx_path)
 
+    platoons = sorted(set(p.platoon for p in people))
+    for plt in platoons:
+        safe_name = plt.replace(" ", "_")
+        plt_path = os.path.join(output_dir, f"recall_assignments_{safe_name}.xlsx")
+        print(f"Writing {plt} spreadsheet → {plt_path}")
+        export_xlsx(people, plt_path, platoon_filter=plt)
+
     print(f"Writing HTML chart  → {html_path}")
     export_html(people, html_path)
 

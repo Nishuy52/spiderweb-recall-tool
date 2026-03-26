@@ -24,8 +24,10 @@ def platoon_fill(platoon: str, platoon_map: dict) -> PatternFill:
     idx = platoon_map.get(platoon, 0) % len(PLATOON_COLORS)
     return PatternFill("solid", start_color=PLATOON_COLORS[idx])
 
-def export_xlsx(people: list[Person], output_path: str):
+def export_xlsx(people: list[Person], output_path: str, platoon_filter: str | None = None):
     wb = Workbook()
+
+    display_people = [p for p in people if p.platoon == platoon_filter] if platoon_filter else people
 
     # --- Sheet 1: Call Assignments ---
     ws = wb.active
@@ -42,10 +44,10 @@ def export_xlsx(people: list[Person], output_path: str):
         cell.border = BORDER
 
     # Build platoon colour map
-    platoons = sorted(set(p.platoon for p in people))
+    platoons = sorted(set(p.platoon for p in display_people))
     platoon_map = {plt: i for i, plt in enumerate(platoons)}
 
-    all_people = sorted(people, key=lambda p: (p.platoon, p.rank_level, p.name))
+    all_people = sorted(display_people, key=lambda p: (p.platoon, p.rank_level, p.name))
 
     for p in all_people:
         calls_str    = ", ".join(f"{c.rank} {c.name}" for c in p.calls)
@@ -78,14 +80,14 @@ def export_xlsx(people: list[Person], output_path: str):
     ws2.column_dimensions["A"].width = 30
     ws2.column_dimensions["B"].width = 20
 
-    available = [p for p in people if p.available]
+    available = [p for p in display_people if p.available]
     reached   = [p for p in available if p.called_by or p.is_initiator]
 
     stats = [
-        ("Total Personnel",        len(people)),
+        ("Total Personnel",        len(display_people)),
         ("Available",              len(available)),
-        ("Unavailable",            len(people) - len(available)),
-        ("Initiators",             len([p for p in people if p.is_initiator])),
+        ("Unavailable",            len(display_people) - len(available)),
+        ("Initiators",             len([p for p in display_people if p.is_initiator])),
         ("Personnel Reachable",    len(reached)),
         ("Personnel Unreachable",  len(available) - len(reached)),
         ("Coverage %",             f"{len(reached)/len(available)*100:.1f}%" if available else "N/A"),
